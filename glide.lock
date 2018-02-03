@@ -1,0 +1,36 @@
+hash: e5bd77862a6ac20cb867998314681a09271b1710d8c1d263107915b694ff2ac4
+updated: 2018-02-03T18:31:12.901414+01:00
+imports:
+- name: github.com/codeuniversity/xing-datahub-protocol
+  version: 2399e15db6ab3aa59b2f26e4ad3f644b589caf2e
+- name: github.com/colinmarc/hdfs
+  version: 69e5098fa51e208a466aef9a5283b0101e6e4f54
+- name: github.com/davecgh/go-spew
+  version: db69d09d2c587e9b9677f991dfcab1fc24d9086e
+  subpackages:
+  - spew
+- name: github.com/eapache/go-resiliency
+  version: ef9aaa7ea8bd2448429af1a77cf41b2b3b34bdd6
+  subpackages:
+  - breaker
+- name: github.com/eapache/go-xerial-snappy
+  version: bb955e01b9346ac19dc29eb16586c90ded99a98c
+- name: github.com/eapache/queue
+  version: 44cc805cf13205b55f69e14bcb69867d1ae92f98
+- name: github.com/golang/protobuf
+  version: 925541529c1fa6821df4e44ce2723319eb2be768
+  subpackages:
+  - proto
+- name: github.com/golang/snappy
+  version: 553a641470496b2327abcac10b36396bd98e45c9
+- name: github.com/pierrec/lz4
+  version: ed8d4cc3b461464e69798080a0092bd028910298
+- name: github.com/pierrec/xxHash
+  version: a0006b13c722f7f12368c00a3d3c2ae8a999a0c6
+  subpackages:
+  - xxHash32
+- name: github.com/rcrowley/go-metrics
+  version: 8732c616f52954686704c8645fe1a9d59e9df7c1
+- name: github.com/Shopify/sarama
+  version: 3b1b38866a79f06deddf0487d5c27ba0697ccd65
+testImports: []
