@@ -30,9 +30,21 @@ func main() {
 	user := &protocol.User{}
 	go consume(userExporter, user, "users")
 
-	connectionExporter := exporter.NewConnectionExporter(50000, producer)
-	connection := &protocol.Connection{}
-	go consume(connectionExporter, connection, "connections")
+	itemExporter := exporter.NewItemExporter(50000, producer)
+	item := &protocol.Item{}
+	go consume(itemExporter, item, "items")
+
+	interactionExporter := exporter.NewInteractionExporter(50000, producer)
+	interaction := &protocol.Interaction{}
+	go consume(interactionExporter, interaction, "interactions")
+
+	targetUserExporter := exporter.NewTargetUserExporter(50000, producer)
+	targetUser := &protocol.TargetUser{}
+	go consume(targetUserExporter, targetUser, "target_users")
+
+	targetItemExporter := exporter.NewTargetItemExporter(50000, producer)
+	targetItem := &protocol.TargetItem{}
+	go consume(targetItemExporter, targetItem, "target_items")
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt)

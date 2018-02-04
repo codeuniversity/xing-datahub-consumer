@@ -12,8 +12,8 @@ import (
 	"github.com/codeuniversity/xing-datahub-protocol"
 )
 
-// UserExporter is responsible for handling the batching of users
-type UserExporter struct {
+// TargetUserExporter is responsible for handling the batching of TargetUsers
+type TargetUserExporter struct {
 	producer     sarama.AsyncProducer
 	batchCount   int
 	count        int
@@ -23,17 +23,17 @@ type UserExporter struct {
 	filepath     string
 }
 
-// NewUserExporter initiliazes a UserExporter
-func NewUserExporter(batchSize int, producer sarama.AsyncProducer) *UserExporter {
+// NewTargetUserExporter initiliazes a TargetUserExporter
+func NewTargetUserExporter(batchSize int, producer sarama.AsyncProducer) *TargetUserExporter {
 	os.Mkdir(pathPrefix, os.ModePerm)
-	filename := "firstusers"
+	filename := "firsttargetUsers"
 	filepath := pathPrefix + filename
 	f, err := os.Create(filepath)
 	if err != nil {
 		panic(err)
 	}
 
-	return &UserExporter{
+	return &TargetUserExporter{
 		producer:     producer,
 		batchCount:   0,
 		count:        0,
@@ -44,28 +44,28 @@ func NewUserExporter(batchSize int, producer sarama.AsyncProducer) *UserExporter
 	}
 }
 
-//Export exports a User
-func (e *UserExporter) Export(m *proto.Message) {
+//Export exports a TargetUser
+func (e *TargetUserExporter) Export(m *proto.Message) {
 
-	user := &protocol.User{}
+	targetUser := &protocol.TargetUser{}
 	code, err := proto.Marshal(*m)
 	if err != nil {
 		panic(err)
 	}
-	if err := proto.Unmarshal(code, user); err != nil {
+	if err := proto.Unmarshal(code, targetUser); err != nil {
 		panic(err)
 	}
 
 	e.batchCount++
 	e.count++
-	e.writeToFile(user)
+	e.writeToFile(targetUser)
 	if e.batchCount >= e.maxBatchSize {
 		e.Commit()
 	}
 }
 
 //Commit uploads the csv file prematurely
-func (e *UserExporter) Commit() {
+func (e *TargetUserExporter) Commit() {
 	if err := e.fileHandle.Close(); err != nil {
 		panic(err)
 	}
@@ -73,7 +73,7 @@ func (e *UserExporter) Commit() {
 	csvInfo := &protocol.WrittenCSVInfo{
 		Filename:   e.filename,
 		Filepath:   e.filepath,
-		RecordType: "users",
+		RecordType: "target_users",
 	}
 	m, err := proto.Marshal(csvInfo)
 	if err != nil {
@@ -88,7 +88,7 @@ func (e *UserExporter) Commit() {
 	fmt.Println("sent: ", e.filepath)
 
 	e.batchCount = 0
-	e.filename = "users" + strconv.Itoa(e.count)
+	e.filename = "targetusers" + strconv.Itoa(e.count)
 	e.filepath = pathPrefix + e.filename
 	f, err := os.Create(e.filepath)
 	if err != nil {
@@ -97,29 +97,16 @@ func (e *UserExporter) Commit() {
 	e.fileHandle = f
 }
 
-func (e *UserExporter) writeToFile(user *protocol.User) {
-	s := userToCsvLine(user)
+func (e *TargetUserExporter) writeToFile(t *protocol.TargetUser) {
+	s := targetUserToCsvLine(t)
 	if _, err := e.fileHandle.Write([]byte(s)); err != nil {
 		panic(err)
 	}
 }
 
-func userToCsvLine(u *protocol.User) string {
+func targetUserToCsvLine(t *protocol.TargetUser) string {
 	return fmt.Sprintf(
-		"%v;%v;%v;%v;%v;%v;%v;%v;%v;%v;%v;%v;%v;%v;\n",
-		u.Id,
-		arrayHelper(u.Jobroles),
-		u.CareerLevel,
-		u.DisciplineId,
-		u.IndustryId,
-		u.Country,
-		u.Region,
-		u.ExperienceNEntriesClass,
-		u.ExperienceYearsExperience,
-		u.ExperienceYearsInCurrent,
-		u.EduDegree,
-		arrayHelper(u.EduFieldofstudies),
-		u.Wtcj,
-		u.Premium,
+		"%v;\n",
+		t.UserId,
 	)
 }
