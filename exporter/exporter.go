@@ -11,6 +11,7 @@ var pathPrefix = "/tmp/datahub-data/"
 // Exporter exports a proto message in batches
 type Exporter interface {
 	Export(*proto.Message)
+	Commit()
 }
 
 func arrayHelper(arr []int32) string {

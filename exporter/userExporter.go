@@ -66,6 +66,9 @@ func (e *UserExporter) Export(m *proto.Message) {
 
 //Commit uploads the csv file prematurely
 func (e *UserExporter) Commit() {
+	if e.batchCount == 0 {
+		return
+	}
 	if err := e.fileHandle.Close(); err != nil {
 		panic(err)
 	}

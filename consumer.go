@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/codeuniversity/xing-datahub-protocol"
 
@@ -56,7 +57,7 @@ func main() {
 func consume(e exporter.Exporter, m proto.Message, topic string) {
 	consumerConfig := sarama.NewConfig()
 	consumerConfig.Consumer.Return.Errors = true
-
+	consumerConfig.Consumer.MaxWaitTime = 5 * time.Second
 	master, err := sarama.NewConsumer(brokers, consumerConfig)
 	if err != nil {
 		panic(err)
@@ -76,7 +77,12 @@ func consume(e exporter.Exporter, m proto.Message, topic string) {
 	signal.Notify(signals, os.Interrupt)
 
 	for {
+		timer := time.NewTimer(time.Second * 5)
+
 		select {
+		case <-timer.C:
+			fmt.Println("trying to commit", topic)
+			e.Commit()
 		case err := <-consumer.Errors():
 			fmt.Println(err)
 		case msg := <-consumer.Messages():
@@ -85,6 +91,7 @@ func consume(e exporter.Exporter, m proto.Message, topic string) {
 		case <-signals:
 			fmt.Println(topic, " shutting down")
 		}
+		timer.Stop()
 	}
 
 }
