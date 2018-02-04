@@ -2,7 +2,7 @@ hash: e5bd77862a6ac20cb867998314681a09271b1710d8c1d263107915b694ff2ac4
 updated: 2018-02-03T18:31:12.901414+01:00
 imports:
 - name: github.com/codeuniversity/xing-datahub-protocol
-  version: 2399e15db6ab3aa59b2f26e4ad3f644b589caf2e
+  version: 4acf62e133f1e03eac0bd3e4110a737f562e5f23
 - name: github.com/colinmarc/hdfs
   version: 69e5098fa51e208a466aef9a5283b0101e6e4f54
 - name: github.com/davecgh/go-spew
