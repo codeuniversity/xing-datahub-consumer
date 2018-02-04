@@ -12,8 +12,8 @@ import (
 	"github.com/codeuniversity/xing-datahub-protocol"
 )
 
-// ConnectionExporter is responsible for handling the batching of connections
-type ConnectionExporter struct {
+// TargetItemExporter is responsible for handling the batching of TargetItems
+type TargetItemExporter struct {
 	producer     sarama.AsyncProducer
 	batchCount   int
 	count        int
@@ -23,18 +23,17 @@ type ConnectionExporter struct {
 	filepath     string
 }
 
-// NewConnectionExporter initiliazes a ConnectionExporter
-func NewConnectionExporter(batchSize int, producer sarama.AsyncProducer) *ConnectionExporter {
+// NewTargetItemExporter initiliazes a TargetItemExporter
+func NewTargetItemExporter(batchSize int, producer sarama.AsyncProducer) *TargetItemExporter {
 	os.Mkdir(pathPrefix, os.ModePerm)
-
-	filename := "firstconnections"
+	filename := "firsttargetitems"
 	filepath := pathPrefix + filename
 	f, err := os.Create(filepath)
 	if err != nil {
 		panic(err)
 	}
 
-	return &ConnectionExporter{
+	return &TargetItemExporter{
 		producer:     producer,
 		batchCount:   0,
 		count:        0,
@@ -45,27 +44,32 @@ func NewConnectionExporter(batchSize int, producer sarama.AsyncProducer) *Connec
 	}
 }
 
-//Export exports a Connection
-func (e *ConnectionExporter) Export(m *proto.Message) {
-	c := &protocol.Connection{}
+//Export exports a TargetItem
+func (e *TargetItemExporter) Export(m *proto.Message) {
+
+	targetItem := &protocol.TargetItem{}
 	code, err := proto.Marshal(*m)
 	if err != nil {
 		panic(err)
 	}
-	if err := proto.Unmarshal(code, c); err != nil {
+	if err := proto.Unmarshal(code, targetItem); err != nil {
 		panic(err)
 	}
 
 	e.batchCount++
 	e.count++
-	e.writeToFile(c)
+	e.writeToFile(targetItem)
 	if e.batchCount >= e.maxBatchSize {
 		e.Commit()
 	}
 }
 
 //Commit uploads the csv file prematurely
-func (e *ConnectionExporter) Commit() {
+func (e *TargetItemExporter) Commit() {
+	if e.batchCount == 0 {
+		return
+	}
+
 	if err := e.fileHandle.Close(); err != nil {
 		panic(err)
 	}
@@ -73,7 +77,7 @@ func (e *ConnectionExporter) Commit() {
 	csvInfo := &protocol.WrittenCSVInfo{
 		Filename:   e.filename,
 		Filepath:   e.filepath,
-		RecordType: "connections",
+		RecordType: "target_items",
 	}
 	m, err := proto.Marshal(csvInfo)
 	if err != nil {
@@ -88,7 +92,7 @@ func (e *ConnectionExporter) Commit() {
 	fmt.Println("sent: ", e.filepath)
 
 	e.batchCount = 0
-	e.filename = "connections" + strconv.Itoa(e.count)
+	e.filename = "targetitems" + strconv.Itoa(e.count)
 	e.filepath = pathPrefix + e.filename
 	f, err := os.Create(e.filepath)
 	if err != nil {
@@ -97,17 +101,16 @@ func (e *ConnectionExporter) Commit() {
 	e.fileHandle = f
 }
 
-func (e *ConnectionExporter) writeToFile(c *protocol.Connection) {
-	s := connectionToCsvLine(c)
+func (e *TargetItemExporter) writeToFile(t *protocol.TargetItem) {
+	s := targetItemToCsvLine(t)
 	if _, err := e.fileHandle.Write([]byte(s)); err != nil {
 		panic(err)
 	}
 }
 
-func connectionToCsvLine(c *protocol.Connection) string {
+func targetItemToCsvLine(t *protocol.TargetItem) string {
 	return fmt.Sprintf(
-		"%v;%v;\n",
-		c.A,
-		c.B,
+		"%v;\n",
+		t.ItemId,
 	)
 }
