@@ -27,7 +27,7 @@ type ItemExporter struct {
 func NewItemExporter(batchSize int, producer sarama.AsyncProducer) *ItemExporter {
 	os.Mkdir(pathPrefix, os.ModePerm)
 
-	filename := "firstItems"
+	filename := "firstitems"
 	filepath := pathPrefix + filename
 	f, err := os.Create(filepath)
 	if err != nil {
@@ -77,7 +77,7 @@ func (e *ItemExporter) Commit() {
 	csvInfo := &protocol.WrittenCSVInfo{
 		Filename:   e.filename,
 		Filepath:   e.filepath,
-		RecordType: "Items",
+		RecordType: "items",
 	}
 	m, err := proto.Marshal(csvInfo)
 	if err != nil {
@@ -92,7 +92,7 @@ func (e *ItemExporter) Commit() {
 	fmt.Println("sent: ", e.filepath)
 
 	e.batchCount = 0
-	e.filename = "Items" + strconv.Itoa(e.count)
+	e.filename = "items" + strconv.Itoa(e.count)
 	e.filepath = pathPrefix + e.filename
 	f, err := os.Create(e.filepath)
 	if err != nil {
