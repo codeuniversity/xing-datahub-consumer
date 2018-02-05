@@ -27,7 +27,7 @@ func main() {
 		panic(err)
 	}
 
-	userExporter := exporter.NewUserExporter(2500, producer)
+	userExporter := exporter.NewUserExporter(50000, producer)
 	user := &protocol.User{}
 	go consume(userExporter, user, "users")
 
