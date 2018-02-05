@@ -6,7 +6,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-var pathPrefix = "/tmp/datahub-data/"
+var pathPrefix = "/datahub-data/"
 
 // Exporter exports a proto message in batches
 type Exporter interface {

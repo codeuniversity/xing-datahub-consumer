@@ -26,7 +26,7 @@ type TargetUserExporter struct {
 // NewTargetUserExporter initiliazes a TargetUserExporter
 func NewTargetUserExporter(batchSize int, producer sarama.AsyncProducer) *TargetUserExporter {
 	os.Mkdir(pathPrefix, os.ModePerm)
-	filename := "firsttargetUsers"
+	filename := "firsttargetusers"
 	filepath := pathPrefix + filename
 	f, err := os.Create(filepath)
 	if err != nil {
