@@ -81,7 +81,6 @@ func consume(e exporter.Exporter, m proto.Message, topic string) {
 
 		select {
 		case <-timer.C:
-			fmt.Println("trying to commit", topic)
 			e.Commit()
 		case err := <-consumer.Errors():
 			fmt.Println(err)
