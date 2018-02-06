@@ -58,11 +58,11 @@ func consume(e exporter.Exporter, m proto.Message, topic string) {
 	consumerConfig := sarama.NewConfig()
 	consumerConfig.Consumer.Return.Errors = true
 	consumerConfig.Consumer.MaxWaitTime = 5 * time.Second
+
 	master, err := sarama.NewConsumer(brokers, consumerConfig)
 	if err != nil {
 		panic(err)
 	}
-
 	defer func() {
 		if err := master.Close(); err != nil {
 			panic(err)
@@ -73,12 +73,12 @@ func consume(e exporter.Exporter, m proto.Message, topic string) {
 	if err != nil {
 		panic(err)
 	}
+
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt)
 
 	for {
 		timer := time.NewTimer(time.Second * 5)
-
 		select {
 		case <-timer.C:
 			e.Commit()
