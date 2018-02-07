@@ -25,7 +25,9 @@ type InteractionExporter struct {
 
 // NewInteractionExporter initiliazes a InteractionExporter
 func NewInteractionExporter(batchSize int, producer sarama.AsyncProducer) *InteractionExporter {
-	os.Mkdir(pathPrefix, os.ModePerm)
+	if err := os.Mkdir(pathPrefix, os.ModePerm); err != nil {
+		fmt.Println(err)
+	}
 	filename := "firstinteractions"
 	filepath := pathPrefix + filename
 	f, err := os.Create(filepath)
@@ -104,6 +106,9 @@ func (e *InteractionExporter) Commit() {
 func (e *InteractionExporter) writeToFile(interaction *protocol.Interaction) {
 	s := interactionToCsvLine(interaction)
 	if _, err := e.fileHandle.Write([]byte(s)); err != nil {
+		panic(err)
+	}
+	if err := e.fileHandle.Sync(); err != nil {
 		panic(err)
 	}
 }

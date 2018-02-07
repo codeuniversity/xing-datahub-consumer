@@ -27,23 +27,23 @@ func main() {
 		panic(err)
 	}
 
-	userExporter := exporter.NewUserExporter(50000, producer)
+	userExporter := exporter.NewUserExporter(20000000, producer)
 	user := &protocol.User{}
 	go consume(userExporter, user, "users")
 
-	itemExporter := exporter.NewItemExporter(50000, producer)
+	itemExporter := exporter.NewItemExporter(20000000, producer)
 	item := &protocol.Item{}
 	go consume(itemExporter, item, "items")
 
-	interactionExporter := exporter.NewInteractionExporter(50000, producer)
+	interactionExporter := exporter.NewInteractionExporter(20000000, producer)
 	interaction := &protocol.Interaction{}
 	go consume(interactionExporter, interaction, "interactions")
 
-	targetUserExporter := exporter.NewTargetUserExporter(50000, producer)
+	targetUserExporter := exporter.NewTargetUserExporter(20000000, producer)
 	targetUser := &protocol.TargetUser{}
 	go consume(targetUserExporter, targetUser, "target_users")
 
-	targetItemExporter := exporter.NewTargetItemExporter(50000, producer)
+	targetItemExporter := exporter.NewTargetItemExporter(20000000, producer)
 	targetItem := &protocol.TargetItem{}
 	go consume(targetItemExporter, targetItem, "target_items")
 

@@ -25,7 +25,9 @@ type TargetUserExporter struct {
 
 // NewTargetUserExporter initiliazes a TargetUserExporter
 func NewTargetUserExporter(batchSize int, producer sarama.AsyncProducer) *TargetUserExporter {
-	os.Mkdir(pathPrefix, os.ModePerm)
+	if err := os.Mkdir(pathPrefix, os.ModePerm); err != nil {
+		fmt.Println(err)
+	}
 	filename := "firsttargetusers"
 	filepath := pathPrefix + filename
 	f, err := os.Create(filepath)
@@ -104,6 +106,9 @@ func (e *TargetUserExporter) Commit() {
 func (e *TargetUserExporter) writeToFile(t *protocol.TargetUser) {
 	s := targetUserToCsvLine(t)
 	if _, err := e.fileHandle.Write([]byte(s)); err != nil {
+		panic(err)
+	}
+	if err := e.fileHandle.Sync(); err != nil {
 		panic(err)
 	}
 }

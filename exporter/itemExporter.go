@@ -25,8 +25,9 @@ type ItemExporter struct {
 
 // NewItemExporter initiliazes a ItemExporter
 func NewItemExporter(batchSize int, producer sarama.AsyncProducer) *ItemExporter {
-	os.Mkdir(pathPrefix, os.ModePerm)
-
+	if err := os.Mkdir(pathPrefix, os.ModePerm); err != nil {
+		fmt.Println(err)
+	}
 	filename := "firstitems"
 	filepath := pathPrefix + filename
 	f, err := os.Create(filepath)
@@ -104,6 +105,9 @@ func (e *ItemExporter) Commit() {
 func (e *ItemExporter) writeToFile(c *protocol.Item) {
 	s := itemToCsvLine(c)
 	if _, err := e.fileHandle.Write([]byte(s)); err != nil {
+		panic(err)
+	}
+	if err := e.fileHandle.Sync(); err != nil {
 		panic(err)
 	}
 }
