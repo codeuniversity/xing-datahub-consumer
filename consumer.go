@@ -88,6 +88,7 @@ func consume(e exporter.Exporter, m proto.Message, topic string) {
 			proto.Unmarshal(msg.Value, m)
 			e.Export(&m)
 		case <-signals:
+			e.Commit()
 			fmt.Println(topic, " shutting down")
 		}
 		timer.Stop()
