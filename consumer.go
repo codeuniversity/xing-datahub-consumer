@@ -6,13 +6,10 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/codeuniversity/xing-datahub-protocol"
-
-	"github.com/golang/protobuf/proto"
-
 	"github.com/Shopify/sarama"
 	cluster "github.com/bsm/sarama-cluster"
 	"github.com/codeuniversity/xing-datahub-consumer/exporter"
+	"github.com/codeuniversity/xing-datahub-consumer/models"
 )
 
 var brokers = []string{"localhost:9092"}
@@ -33,24 +30,24 @@ func main() {
 	config.Group.Return.Notifications = false
 	config.Consumer.Offsets.Initial = sarama.OffsetOldest
 
-	userExporter := exporter.NewUserExporter(20000000, producer)
-	user := &protocol.User{}
+	userExporter := exporter.NewExporter(20000000, producer, "users")
+	user := &models.User{}
 	go consume(userExporter, user, "users")
 
-	itemExporter := exporter.NewItemExporter(20000000, producer)
-	item := &protocol.Item{}
+	itemExporter := exporter.NewExporter(20000000, producer, "items")
+	item := &models.Item{}
 	go consume(itemExporter, item, "items")
 
-	interactionExporter := exporter.NewInteractionExporter(20000000, producer)
-	interaction := &protocol.Interaction{}
+	interactionExporter := exporter.NewExporter(20000000, producer, "interactions")
+	interaction := &models.Interaction{}
 	go consume(interactionExporter, interaction, "interactions")
 
-	targetUserExporter := exporter.NewTargetUserExporter(20000000, producer)
-	targetUser := &protocol.TargetUser{}
+	targetUserExporter := exporter.NewExporter(20000000, producer, "target_users")
+	targetUser := &models.TargetUser{}
 	go consume(targetUserExporter, targetUser, "target_users")
 
-	targetItemExporter := exporter.NewTargetItemExporter(20000000, producer)
-	targetItem := &protocol.TargetItem{}
+	targetItemExporter := exporter.NewExporter(20000000, producer, "target_items")
+	targetItem := &models.TargetItem{}
 	go consume(targetItemExporter, targetItem, "target_items")
 
 	signals := make(chan os.Signal, 1)
@@ -60,7 +57,7 @@ func main() {
 	fmt.Println("Interrupt is detected")
 }
 
-func consume(e exporter.Exporter, m proto.Message, topic string) {
+func consume(e *exporter.Exporter, m models.Model, topic string) {
 	consumer, err := cluster.NewConsumer(brokers, "batcher", []string{topic}, config)
 	if err != nil {
 		panic(err)
@@ -76,20 +73,19 @@ func consume(e exporter.Exporter, m proto.Message, topic string) {
 		case <-timer.C:
 			e.Commit()
 		case err := <-consumer.Errors():
-			fmt.Println(err)
+			panic(err)
 		case msg, ok := <-consumer.Messages():
 			if ok {
-				if err := proto.Unmarshal(msg.Value, m); err != nil {
-					fmt.Println(err)
+				if err := m.UnmarshalFrom(msg.Value); err != nil {
 					consumer.MarkOffset(msg, "")
-				} else if err = e.Export(&m); err != nil {
+					fmt.Println(err)
+				} else if err = e.Export(m); err != nil {
 					fmt.Println(err)
 					e.Commit()
 					panic(err)
 				} else {
 					consumer.MarkOffset(msg, "")
 				}
-
 			}
 		case <-signals:
 			e.Commit()
