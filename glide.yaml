@@ -3,3 +3,5 @@ import:
 - package: github.com/codeuniversity/xing-datahub-protocol
 - package: github.com/colinmarc/hdfs
   version: ^1.1.0
+- package: github.com/bsm/sarama-cluster
+  version: ^2.1.12

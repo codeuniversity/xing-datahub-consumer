@@ -47,32 +47,35 @@ func NewItemExporter(batchSize int, producer sarama.AsyncProducer) *ItemExporter
 }
 
 //Export exports a Item
-func (e *ItemExporter) Export(m *proto.Message) {
+func (e *ItemExporter) Export(m *proto.Message) error {
 	c := &protocol.Item{}
 	code, err := proto.Marshal(*m)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	if err := proto.Unmarshal(code, c); err != nil {
-		panic(err)
+		return err
 	}
 
+	if err := e.writeToFile(c); err != nil {
+		return err
+	}
 	e.batchCount++
 	e.count++
-	e.writeToFile(c)
 	if e.batchCount >= e.maxBatchSize {
-		e.Commit()
+		return e.Commit()
 	}
+	return nil
 }
 
 //Commit uploads the csv file prematurely
-func (e *ItemExporter) Commit() {
+func (e *ItemExporter) Commit() error {
 	if e.batchCount == 0 {
-		return
+		return nil
 	}
 
 	if err := e.fileHandle.Close(); err != nil {
-		panic(err)
+		return err
 	}
 
 	csvInfo := &protocol.WrittenCSVInfo{
@@ -82,7 +85,7 @@ func (e *ItemExporter) Commit() {
 	}
 	m, err := proto.Marshal(csvInfo)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	kafkaMessage := &sarama.ProducerMessage{
@@ -97,19 +100,21 @@ func (e *ItemExporter) Commit() {
 	e.filepath = pathPrefix + e.filename
 	f, err := os.Create(e.filepath)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	e.fileHandle = f
+	return nil
 }
 
-func (e *ItemExporter) writeToFile(c *protocol.Item) {
+func (e *ItemExporter) writeToFile(c *protocol.Item) error {
 	s := itemToCsvLine(c)
 	if _, err := e.fileHandle.Write([]byte(s)); err != nil {
-		panic(err)
+		return err
 	}
 	if err := e.fileHandle.Sync(); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
 func itemToCsvLine(i *protocol.Item) string {

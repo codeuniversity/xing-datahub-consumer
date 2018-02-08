@@ -11,21 +11,27 @@ import (
 	"github.com/golang/protobuf/proto"
 
 	"github.com/Shopify/sarama"
+	cluster "github.com/bsm/sarama-cluster"
 	"github.com/codeuniversity/xing-datahub-consumer/exporter"
 )
 
 var brokers = []string{"localhost:9092"}
+var config = cluster.NewConfig()
 
 func main() {
 
 	producerConfig := sarama.NewConfig()
 	producerConfig.Producer.Return.Successes = false
-	producerConfig.Producer.Return.Errors = false
+	producerConfig.Producer.Return.Errors = true
 
 	producer, err := sarama.NewAsyncProducer(brokers, producerConfig)
 	if err != nil {
 		panic(err)
 	}
+
+	config.Consumer.Return.Errors = false
+	config.Group.Return.Notifications = false
+	config.Consumer.Offsets.Initial = sarama.OffsetOldest
 
 	userExporter := exporter.NewUserExporter(20000000, producer)
 	user := &protocol.User{}
@@ -55,24 +61,11 @@ func main() {
 }
 
 func consume(e exporter.Exporter, m proto.Message, topic string) {
-	consumerConfig := sarama.NewConfig()
-	consumerConfig.Consumer.Return.Errors = true
-	consumerConfig.Consumer.MaxWaitTime = 5 * time.Second
-
-	master, err := sarama.NewConsumer(brokers, consumerConfig)
+	consumer, err := cluster.NewConsumer(brokers, "batcher", []string{topic}, config)
 	if err != nil {
 		panic(err)
 	}
-	defer func() {
-		if err := master.Close(); err != nil {
-			panic(err)
-		}
-	}()
-
-	consumer, err := master.ConsumePartition(topic, 0, sarama.OffsetNewest)
-	if err != nil {
-		panic(err)
-	}
+	defer consumer.Close()
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt)
@@ -84,9 +77,20 @@ func consume(e exporter.Exporter, m proto.Message, topic string) {
 			e.Commit()
 		case err := <-consumer.Errors():
 			fmt.Println(err)
-		case msg := <-consumer.Messages():
-			proto.Unmarshal(msg.Value, m)
-			e.Export(&m)
+		case msg, ok := <-consumer.Messages():
+			if ok {
+				if err := proto.Unmarshal(msg.Value, m); err != nil {
+					fmt.Println(err)
+					consumer.MarkOffset(msg, "")
+				} else if err = e.Export(&m); err != nil {
+					fmt.Println(err)
+					e.Commit()
+					panic(err)
+				} else {
+					consumer.MarkOffset(msg, "")
+				}
+
+			}
 		case <-signals:
 			e.Commit()
 			fmt.Println(topic, " shutting down")

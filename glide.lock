@@ -1,6 +1,8 @@
-hash: e5bd77862a6ac20cb867998314681a09271b1710d8c1d263107915b694ff2ac4
-updated: 2018-02-03T18:31:12.901414+01:00
+hash: 17118a38aa990f17f5bb7085a23962b6add0f1924b3fb09b5926689ec8bd16d0
+updated: 2018-02-08T17:44:22.764677+01:00
 imports:
+- name: github.com/bsm/sarama-cluster
+  version: 3001c2453136632aa3219a58ea3795bb584b83b5
 - name: github.com/codeuniversity/xing-datahub-protocol
   version: 10fc0bbb51dc66246ecfa433e4bf3d370e4fb19e
 - name: github.com/colinmarc/hdfs

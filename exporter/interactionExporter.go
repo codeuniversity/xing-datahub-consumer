@@ -47,33 +47,37 @@ func NewInteractionExporter(batchSize int, producer sarama.AsyncProducer) *Inter
 }
 
 //Export exports a Interaction
-func (e *InteractionExporter) Export(m *proto.Message) {
+func (e *InteractionExporter) Export(m *proto.Message) error {
 
 	Interaction := &protocol.Interaction{}
 	code, err := proto.Marshal(*m)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	if err := proto.Unmarshal(code, Interaction); err != nil {
-		panic(err)
+		return err
 	}
 
+	if err := e.writeToFile(Interaction); err != nil {
+		return err
+	}
 	e.batchCount++
 	e.count++
-	e.writeToFile(Interaction)
+
 	if e.batchCount >= e.maxBatchSize {
-		e.Commit()
+		return e.Commit()
 	}
+	return nil
 }
 
 //Commit uploads the csv file prematurely
-func (e *InteractionExporter) Commit() {
+func (e *InteractionExporter) Commit() error {
 	if e.batchCount == 0 {
-		return
+		return nil
 	}
 
 	if err := e.fileHandle.Close(); err != nil {
-		panic(err)
+		return err
 	}
 
 	csvInfo := &protocol.WrittenCSVInfo{
@@ -83,7 +87,7 @@ func (e *InteractionExporter) Commit() {
 	}
 	m, err := proto.Marshal(csvInfo)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	kafkaMessage := &sarama.ProducerMessage{
@@ -98,19 +102,21 @@ func (e *InteractionExporter) Commit() {
 	e.filepath = pathPrefix + e.filename
 	f, err := os.Create(e.filepath)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	e.fileHandle = f
+	return nil
 }
 
-func (e *InteractionExporter) writeToFile(interaction *protocol.Interaction) {
+func (e *InteractionExporter) writeToFile(interaction *protocol.Interaction) error {
 	s := interactionToCsvLine(interaction)
 	if _, err := e.fileHandle.Write([]byte(s)); err != nil {
-		panic(err)
+		return err
 	}
 	if err := e.fileHandle.Sync(); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
 func interactionToCsvLine(i *protocol.Interaction) string {
