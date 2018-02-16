@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/Shopify/sarama"
+	"github.com/codeuniversity/xing-datahub-consumer/metrics"
 	"github.com/codeuniversity/xing-datahub-consumer/models"
 	protocol "github.com/codeuniversity/xing-datahub-protocol"
 	"github.com/golang/protobuf/proto"
@@ -97,6 +98,7 @@ func (e *Exporter) Commit() error {
 		return err
 	}
 	e.fileHandle = f
+	metrics.BatchesExported.WithLabelValues(e.recordType).Inc()
 	return nil
 }
 

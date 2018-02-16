@@ -2,13 +2,17 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/Shopify/sarama"
 	cluster "github.com/bsm/sarama-cluster"
 	"github.com/codeuniversity/xing-datahub-consumer/exporter"
+	"github.com/codeuniversity/xing-datahub-consumer/metrics"
 	"github.com/codeuniversity/xing-datahub-consumer/models"
 )
 
@@ -25,6 +29,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	initPrometheus()
+	go serve()
 
 	config.Consumer.Return.Errors = false
 	config.Group.Return.Notifications = false
@@ -79,12 +85,14 @@ func consume(e *exporter.Exporter, m models.Model, topic string) {
 				if err := m.UnmarshalFrom(msg.Value); err != nil {
 					consumer.MarkOffset(msg, "")
 					fmt.Println(err)
+					metrics.MessagesConsumed.WithLabelValues(topic, "false").Inc()
 				} else if err = e.Export(m); err != nil {
 					fmt.Println(err)
 					e.Commit()
 					panic(err)
 				} else {
 					consumer.MarkOffset(msg, "")
+					metrics.MessagesConsumed.WithLabelValues(topic, "true").Inc()
 				}
 			}
 		case <-signals:
@@ -94,4 +102,15 @@ func consume(e *exporter.Exporter, m models.Model, topic string) {
 		timer.Stop()
 	}
 
+}
+
+func initPrometheus() {
+	prometheus.MustRegister(metrics.MessagesConsumed)
+	http.Handle("/metrics", prometheus.Handler())
+}
+
+func serve() {
+	if err := http.ListenAndServe(":3001", nil); err != nil {
+		panic(err)
+	}
 }
