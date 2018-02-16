@@ -72,7 +72,7 @@ func consume(e *exporter.Exporter, m models.Model, topic string) {
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt)
-
+loop:
 	for {
 		timer := time.NewTimer(time.Second * 5)
 		select {
@@ -98,6 +98,7 @@ func consume(e *exporter.Exporter, m models.Model, topic string) {
 		case <-signals:
 			e.Commit()
 			fmt.Println(topic, " shutting down")
+			break loop
 		}
 		timer.Stop()
 	}
