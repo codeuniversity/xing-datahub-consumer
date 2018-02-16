@@ -106,6 +106,7 @@ func consume(e *exporter.Exporter, m models.Model, topic string) {
 
 func initPrometheus() {
 	prometheus.MustRegister(metrics.MessagesConsumed)
+	prometheus.MustRegister(metrics.BatchesExported)
 	http.Handle("/metrics", prometheus.Handler())
 }
 
