@@ -107,8 +107,8 @@ func (e *Exporter) writeToFile(m models.Model) error {
 	if _, err := e.fileHandle.Write([]byte(s)); err != nil {
 		return err
 	}
-	if err := e.fileHandle.Sync(); err != nil {
-		return err
-	}
+	// if err := e.fileHandle.Sync(); err != nil {
+	// 	return err
+	// }
 	return nil
 }

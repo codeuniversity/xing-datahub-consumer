@@ -15,6 +15,7 @@ import (
 	"github.com/codeuniversity/xing-datahub-consumer/metrics"
 	"github.com/codeuniversity/xing-datahub-consumer/models"
 )
+import _ "net/http/pprof"
 
 var brokers = []string{"localhost:9092"}
 var config = cluster.NewConfig()
@@ -57,7 +58,7 @@ func main() {
 	go consume(targetItemExporter, targetItem, "target_items")
 
 	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, os.Interrupt)
+	signal.Notify(signals, os.Interrupt, os.Kill)
 
 	<-signals
 	fmt.Println("Interrupt is detected")
@@ -71,7 +72,7 @@ func consume(e *exporter.Exporter, m models.Model, topic string) {
 	defer consumer.Close()
 
 	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, os.Interrupt)
+	signal.Notify(signals, os.Interrupt, os.Kill)
 loop:
 	for {
 		timer := time.NewTimer(time.Second * 5)
