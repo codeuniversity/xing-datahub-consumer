@@ -64,7 +64,7 @@ func (e *Exporter) Export(m models.Model) error {
 	return nil
 }
 
-//Commit uploads the csv file prematurely
+//Commit uploads the csv file
 func (e *Exporter) Commit() error {
 	if e.batchCount == 0 {
 		return nil
