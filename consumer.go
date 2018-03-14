@@ -36,43 +36,46 @@ func main() {
 	config.Consumer.Return.Errors = false
 	config.Group.Return.Notifications = false
 	config.Consumer.Offsets.Initial = sarama.OffsetOldest
+	signalChannels := []chan struct{}{}
+	for i := 0; i < 5; i++ {
+		signalChannels = append(signalChannels, make(chan struct{}, 1))
+	}
 
 	userExporter := exporter.NewExporter(20000000, producer, "users")
 	user := &models.User{}
-	go consume(userExporter, user, "users")
+	go consume(userExporter, user, "users", signalChannels[0])
 
 	itemExporter := exporter.NewExporter(20000000, producer, "items")
 	item := &models.Item{}
-	go consume(itemExporter, item, "items")
+	go consume(itemExporter, item, "items", signalChannels[1])
 
 	interactionExporter := exporter.NewExporter(20000000, producer, "interactions")
 	interaction := &models.Interaction{}
-	go consume(interactionExporter, interaction, "interactions")
+	go consume(interactionExporter, interaction, "interactions", signalChannels[2])
 
 	targetUserExporter := exporter.NewExporter(20000000, producer, "target_users")
 	targetUser := &models.TargetUser{}
-	go consume(targetUserExporter, targetUser, "target_users")
+	go consume(targetUserExporter, targetUser, "target_users", signalChannels[3])
 
 	targetItemExporter := exporter.NewExporter(20000000, producer, "target_items")
 	targetItem := &models.TargetItem{}
-	go consume(targetItemExporter, targetItem, "target_items")
+	go consume(targetItemExporter, targetItem, "target_items", signalChannels[4])
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, os.Kill)
 
 	<-signals
 	fmt.Println("Interrupt is detected")
+	shutdown(signalChannels)
 }
 
-func consume(e *exporter.Exporter, m models.Model, topic string) {
+func consume(e *exporter.Exporter, m models.Model, topic string, shutdownSignal chan struct{}) {
 	consumer, err := cluster.NewConsumer(brokers, "batcher", []string{topic}, config)
 	if err != nil {
 		panic(err)
 	}
 	defer consumer.Close()
 
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, os.Interrupt, os.Kill)
 loop:
 	for {
 		timer := time.NewTimer(time.Second * 5)
@@ -96,14 +99,14 @@ loop:
 					metrics.MessagesConsumed.WithLabelValues(topic, "true").Inc()
 				}
 			}
-		case <-signals:
+		case <-shutdownSignal:
 			e.Commit()
 			fmt.Println(topic, " shutting down")
 			break loop
 		}
 		timer.Stop()
 	}
-
+	shutdownSignal <- struct{}{}
 }
 
 func initPrometheus() {
@@ -116,4 +119,16 @@ func serve() {
 	if err := http.ListenAndServe(":3001", nil); err != nil {
 		panic(err)
 	}
+}
+
+func shutdown(signalChannels []chan struct{}) {
+	fmt.Println("Shutting down consumer gorutines")
+	for _, c := range signalChannels {
+		c <- struct{}{}
+	}
+	fmt.Println("Waiting for final Commits")
+	for _, c := range signalChannels {
+		<-c
+	}
+	fmt.Println("Shutting down")
 }
