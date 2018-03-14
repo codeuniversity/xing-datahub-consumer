@@ -35,7 +35,8 @@ func main() {
 
 	config.Consumer.Return.Errors = false
 	config.Group.Return.Notifications = false
-	config.Consumer.Offsets.Initial = sarama.OffsetOldest
+	config.Consumer.Offsets.Initial = sarama.OffsetNewest
+
 	signalChannels := []chan struct{}{}
 	for i := 0; i < 5; i++ {
 		signalChannels = append(signalChannels, make(chan struct{}, 1))
