@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	_ "net/http/pprof"
@@ -31,7 +30,7 @@ func main() {
 	producerConfig.Producer.Return.Errors = true
 	client, err := hdfs.NewFileSystem(hdfs.Configuration{Addr: "localhost:50070", User: "cloudera"})
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	producer, err := sarama.NewAsyncProducer(brokers, producerConfig)
 	if err != nil {
