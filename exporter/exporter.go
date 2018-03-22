@@ -37,10 +37,13 @@ type hdfsClient interface {
 
 // NewExporter initiliazes an Exporter
 func NewExporter(batchSize int, producer sarama.AsyncProducer, recordType string, client hdfsClient) *Exporter {
-	if err := os.Mkdir(pathPrefix, os.ModePerm); err != nil {
+	filename := filePrefix + recordType
+	filepath := pathPrefix + filename + "/" + filename
+
+	if err := os.MkdirAll(pathPrefix+filename, os.ModePerm); err != nil {
 		fmt.Println(err)
 	}
-	filepath := pathPrefix + filePrefix + recordType
+
 	f, err := os.Create(filepath)
 	if err != nil {
 		panic(err)
@@ -81,7 +84,7 @@ func (e *Exporter) Commit() error {
 	if err := e.fileHandle.Close(); err != nil {
 		return err
 	}
-	fmt.Println("copying")
+	fmt.Println("copying", e.filepath)
 
 	err := copyToRemote(e.filepath, e.filepath, e.hdfsClient)
 	if err != nil {
@@ -106,7 +109,11 @@ func (e *Exporter) Commit() error {
 
 	e.batchCount = 0
 	e.filename = filePrefix + e.recordType + strconv.Itoa(e.count)
-	e.filepath = pathPrefix + e.filename
+	e.filepath = pathPrefix + e.filename + "/" + e.filename
+	if err := os.MkdirAll(pathPrefix+e.filename, os.ModePerm); err != nil {
+		fmt.Println(err)
+	}
+
 	f, err := os.Create(e.filepath)
 	if err != nil {
 		return err
@@ -121,9 +128,6 @@ func (e *Exporter) writeToFile(m models.Model) error {
 	if _, err := e.fileHandle.Write([]byte(s)); err != nil {
 		return err
 	}
-	// if err := e.fileHandle.Sync(); err != nil {
-	// 	return err
-	// }
 	return nil
 }
 
