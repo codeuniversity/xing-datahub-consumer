@@ -2,8 +2,11 @@ package exporter
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strconv"
+
+	hdfs "github.com/vladimirvivien/gowfs"
 
 	"github.com/Shopify/sarama"
 	"github.com/codeuniversity/xing-datahub-consumer/metrics"
@@ -25,10 +28,15 @@ type Exporter struct {
 	recordType   string
 	filename     string
 	filepath     string
+	hdfsClient   hdfsClient
+}
+
+type hdfsClient interface {
+	Create(io.Reader, hdfs.Path, bool, uint64, uint16, os.FileMode, uint) (bool, error)
 }
 
 // NewExporter initiliazes an Exporter
-func NewExporter(batchSize int, producer sarama.AsyncProducer, recordType string) *Exporter {
+func NewExporter(batchSize int, producer sarama.AsyncProducer, recordType string, client hdfsClient) *Exporter {
 	if err := os.Mkdir(pathPrefix, os.ModePerm); err != nil {
 		fmt.Println(err)
 	}
@@ -47,6 +55,7 @@ func NewExporter(batchSize int, producer sarama.AsyncProducer, recordType string
 		recordType:   recordType,
 		filename:     filePrefix + recordType,
 		filepath:     filepath,
+		hdfsClient:   client,
 	}
 }
 
@@ -72,7 +81,12 @@ func (e *Exporter) Commit() error {
 	if err := e.fileHandle.Close(); err != nil {
 		return err
 	}
+	fmt.Println("copying")
 
+	err := copyToRemote(e.filepath, e.filepath, e.hdfsClient)
+	if err != nil {
+		return err
+	}
 	csvInfo := &protocol.WrittenCSVInfo{
 		Filename:   e.filename,
 		Filepath:   e.filepath,
@@ -111,4 +125,23 @@ func (e *Exporter) writeToFile(m models.Model) error {
 	// 	return err
 	// }
 	return nil
+}
+
+func copyToRemote(src string, dst string, client hdfsClient) error {
+	local, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer local.Close()
+
+	_, err = client.Create(
+		local,
+		hdfs.Path{Name: dst},
+		true,
+		0,
+		0,
+		0700,
+		0,
+	)
+	return err
 }
