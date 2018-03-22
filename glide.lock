@@ -1,16 +1,14 @@
-hash: 596fcf41f986c35a26da2d4ff622b2f407609406bb5bafc5388cef748033e003
-updated: 2018-03-05T08:29:49.210867+01:00
+hash: 7909465b00e424d8c81fa175f5fb54c9886f5f8b649d66a0b9d7ca315db0ef09
+updated: 2018-03-22T19:24:43.490152+01:00
 imports:
 - name: github.com/beorn7/perks
   version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
   subpackages:
   - quantile
 - name: github.com/bsm/sarama-cluster
-  version: 3001c2453136632aa3219a58ea3795bb584b83b5
+  version: cf455bc755fe41ac9bb2861e7a961833d9c2ecc3
 - name: github.com/codeuniversity/xing-datahub-protocol
   version: e7f83734e28e148dd0095449247fcc069ad09b89
-- name: github.com/colinmarc/hdfs
-  version: 69e5098fa51e208a466aef9a5283b0101e6e4f54
 - name: github.com/davecgh/go-spew
   version: db69d09d2c587e9b9677f991dfcab1fc24d9086e
   subpackages:
@@ -77,6 +75,8 @@ imports:
   - convey
   - convey/gotest
   - convey/reporting
+- name: github.com/vladimirvivien/gowfs
+  version: 8471987b0ddb28183420039913294a0431384a03
 testImports:
 - name: github.com/gopherjs/gopherjs
   version: 265040a1352e0bb611e87f5b985bf83600c66cce
