@@ -10,3 +10,9 @@ script:
 notifications:
   slack:
     secure: HDD0xR4R2vJb6P4Y6FYm4/cv5pf9EQv/PJybLksD5oBfu7dUvqZJnCnH0K//12RzZtkYuUeN3INcNHKbS2cPgt0k7ogTJwd23RCAx1xRNxGdmxwDzvvGZZlCfPjoMYLPwUGeNNOMf5xE2FybN9VMfyvmkcO7ijpFGmnoFdlEt9VTrlRZQl0+9EGnCyRW+F2pqzpuWxCHXRdtHj9lp3A5GZMG4be7imeGvFUt/jQ6K/KzqsI8cfvriSW6Rex24lDZ7/OLPBlkr5xOyGlQJ21pEGKBL0H2KzUSd36LW9vL/4f6BYKeoyZgdsdTYSFQH4K4esy+Th+G4Qqw6eJ8y50ZzgdJSt1st/rqoOtyGFN+9rytK2NAjlPlNmUNgYAWnoLJrparlH2aTWRTC+QFcOSBFt1ZKhjJ2QiUSMnME7A+GorVr4wl4/Tnn3xLMcXpzmjwzp2XCMpDznwDk6SBqL1+OMjSC3GO39lnd7EKJ63ShXFOyFoTrbJW1MA/tPK+wA7uhpPCFbTykgbiH4PNIw2M2i4vtG97x9a8nNpEoxtOc32GJduOaJ6y6VbUg3rzJWPSWj89Wj6g9TPxhapKOy8eoQlMr6nfLlN5B+BDRoBoejeP5yaR18++SO5WHOuyA1tKhfotVudBlNjTJ6KhPp9nyOM65m7J3c2CcBm/Gs2OpA4=
+after_success:
+  - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
+      docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ;
+      docker build -t alexmorten/consumer . ;
+      docker push alexmorten/consumer ;
+    fi
