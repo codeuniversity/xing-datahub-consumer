@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
+	"log"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
@@ -30,11 +30,11 @@ func main() {
 	producerConfig.Producer.Return.Errors = true
 	client, err := hdfs.NewFileSystem(hdfs.Configuration{Addr: "localhost:50070", User: "cloudera"})
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	producer, err := sarama.NewAsyncProducer(brokers, producerConfig)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	initPrometheus()
 	go serve()
@@ -72,7 +72,7 @@ func main() {
 	signal.Notify(signals, os.Interrupt, os.Kill)
 
 	<-signals
-	fmt.Println("Interrupt is detected")
+	log.Println("Interrupt is detected")
 	shutdown(signalChannels)
 }
 
@@ -95,12 +95,12 @@ loop:
 			if ok {
 				if err := m.UnmarshalFrom(msg.Value); err != nil {
 					consumer.MarkOffset(msg, "")
-					fmt.Println(err)
+					log.Println(err)
 					metrics.MessagesConsumed.WithLabelValues(topic, "false").Inc()
 				} else if err = e.Export(m); err != nil {
-					fmt.Println(err)
+					log.Println(err)
 					e.Commit()
-					panic(err)
+					log.Fatal(err)
 				} else {
 					consumer.MarkOffset(msg, "")
 					metrics.MessagesConsumed.WithLabelValues(topic, "true").Inc()
@@ -108,7 +108,7 @@ loop:
 			}
 		case <-shutdownSignal:
 			e.Commit()
-			fmt.Println(topic, " shutting down")
+			log.Println(topic, " shutting down")
 			break loop
 		}
 		timer.Stop()
@@ -124,18 +124,18 @@ func initPrometheus() {
 
 func serve() {
 	if err := http.ListenAndServe(":3001", nil); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
 
 func shutdown(signalChannels []chan struct{}) {
-	fmt.Println("Shutting down consumer gorutines")
+	log.Println("Shutting down consumer gorutines")
 	for _, c := range signalChannels {
 		c <- struct{}{}
 	}
-	fmt.Println("Waiting for final Commits")
+	log.Println("Waiting for final Commits")
 	for _, c := range signalChannels {
 		<-c
 	}
-	fmt.Println("Shutting down")
+	log.Println("Shutting down")
 }
