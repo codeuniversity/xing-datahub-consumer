@@ -1,8 +1,8 @@
 package exporter
 
 import (
-	"fmt"
 	"io"
+	"log"
 	"os"
 	"strconv"
 
@@ -41,12 +41,12 @@ func NewExporter(batchSize int, producer sarama.AsyncProducer, recordType string
 	filepath := pathPrefix + filename + "/" + filename
 
 	if err := os.MkdirAll(pathPrefix+filename, os.ModePerm); err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 	f, err := os.Create(filepath)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	return &Exporter{
@@ -84,7 +84,7 @@ func (e *Exporter) Commit() error {
 	if err := e.fileHandle.Close(); err != nil {
 		return err
 	}
-	fmt.Println("copying", e.filepath)
+	log.Println("copying", e.filepath)
 
 	err := copyToRemote(e.filepath, e.filepath, e.hdfsClient)
 	if err != nil {
@@ -105,13 +105,13 @@ func (e *Exporter) Commit() error {
 		Value: sarama.ByteEncoder(m),
 	}
 	e.producer.Input() <- kafkaMessage
-	fmt.Println("sent: ", e.filepath)
+	log.Println("sent: ", e.filepath)
 
 	e.batchCount = 0
 	e.filename = filePrefix + e.recordType + strconv.Itoa(e.count)
 	e.filepath = pathPrefix + e.filename + "/" + e.filename
 	if err := os.MkdirAll(pathPrefix+e.filename, os.ModePerm); err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 	f, err := os.Create(e.filepath)
