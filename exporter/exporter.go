@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 
 	hdfs "github.com/vladimirvivien/gowfs"
 
@@ -71,7 +72,11 @@ func (e *Exporter) Export(m models.Model) error {
 	e.count++
 
 	if e.batchCount >= e.maxBatchSize {
-		return e.Commit()
+		if err := e.Commit(); err != nil {
+			time.Sleep(10 * time.Second)
+			return e.Commit()
+		}
+		return nil
 	}
 	return nil
 }
