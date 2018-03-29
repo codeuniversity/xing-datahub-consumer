@@ -82,10 +82,11 @@ func consume(e *exporter.Exporter, m models.Model, topic string, shutdownSignal 
 		panic(err)
 	}
 	defer consumer.Close()
-
+	timer := time.NewTimer(time.Second * 5)
 loop:
 	for {
-		timer := time.NewTimer(time.Second * 5)
+		timer.Stop()
+		timer.Reset(time.Second * 5)
 		select {
 		case <-timer.C:
 			e.Commit()
