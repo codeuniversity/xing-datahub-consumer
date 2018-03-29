@@ -84,6 +84,18 @@ func TestExporter(t *testing.T) {
 	})
 }
 
+func BenchmarkExport(b *testing.B) {
+	pathPrefix = "tmp/"
+	exporter := basicMockProducer("users")
+	user := &protocol.User{}
+	random := fuzz.New().NilChance(0)
+	random.Fuzz(user)
+	m := &models.User{M: user}
+	for n := 0; n < b.N; n++ {
+		exporter.Export(m)
+	}
+}
+
 type mockHDFSClient struct {
 	onCreate func(io.Reader)
 }
@@ -93,4 +105,10 @@ func (m *mockHDFSClient) Create(f io.Reader, _ hdfs.Path, _ bool, _ uint64, _ ui
 		m.onCreate(f)
 	}
 	return true, nil
+}
+
+func basicMockProducer(recordType string) *Exporter {
+	producer := &mocks.AsyncProducer{}
+	mockClient := &mockHDFSClient{}
+	return NewExporter(20000000, producer, recordType, mockClient)
 }
