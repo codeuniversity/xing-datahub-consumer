@@ -119,6 +119,7 @@ func (e *Exporter) Commit() error {
 	}
 	e.producer.Input() <- kafkaMessage
 	log.Println("sent: ", e.filepath)
+	os.Remove(e.filepath)
 
 	e.batchCount = 0
 	e.filename = filePrefix + e.recordType + strconv.Itoa(e.count)
