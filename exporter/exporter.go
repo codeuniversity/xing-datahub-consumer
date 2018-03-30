@@ -99,7 +99,10 @@ func (e *Exporter) Commit() error {
 		time.Sleep(10 * time.Second)
 		err = copyToRemote(e.filepath, e.filepath, e.hdfsClient)
 	}
-
+	if err != nil {
+		log.Println(err)
+		return err
+	}
 	csvInfo := &protocol.WrittenCSVInfo{
 		Filename:   e.filename,
 		Filepath:   e.filepath,
