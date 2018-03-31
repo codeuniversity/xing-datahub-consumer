@@ -72,11 +72,7 @@ func (e *Exporter) Export(m models.Model) error {
 	e.count++
 
 	if e.batchCount >= e.maxBatchSize {
-		if err := e.Commit(); err != nil {
-			time.Sleep(10 * time.Second)
-			return e.Commit()
-		}
-		return nil
+		return e.Commit()
 	}
 	return nil
 }
